@@ -174,7 +174,7 @@ export async function POST(request: Request) {
       failOn: "none",
     })
       .rotate()
-      .rotate(rotation)
+      .rotate(-rotation)
       .resize({
         width: 2200,
         height: 2200,

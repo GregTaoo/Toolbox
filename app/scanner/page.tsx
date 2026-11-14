@@ -143,8 +143,8 @@ function PerspectiveEditor({
           maxWidth: "100%",
           maxHeight: "100%",
           lineHeight: 0,
-          borderRadius: 1.5,
-          overflow: "hidden",
+          borderRadius: 0,
+          overflow: "visible",
           boxShadow: "0 10px 28px rgba(32,38,70,.12)",
         }}
       >
@@ -158,14 +158,17 @@ function PerspectiveEditor({
             })
           }
           style={{
-            width: "100%",
-            height: "100%",
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            width: natural.w ? natural.w * scale : "100%",
+            height: natural.h ? natural.h * scale : "100%",
             display: "block",
             objectFit: "contain",
-            borderRadius: "inherit",
+            borderRadius: 0,
             userSelect: "none",
             pointerEvents: "none",
-            transform: `rotate(${rotation}deg)`,
+            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
           }}
         />
         <svg
