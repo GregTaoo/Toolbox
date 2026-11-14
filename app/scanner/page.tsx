@@ -57,6 +57,34 @@ const defaultPerspective = (): Perspective => [
   { x: 0, y: 1 },
 ];
 
+function rotatePerspective(points: Perspective, rotation: number): Perspective {
+  let result = points;
+  for (let turn = 0; turn < rotation / 90; turn += 1) {
+    result = result.map((point) => ({ x: 1 - point.y, y: point.x })) as Perspective;
+  }
+  return result;
+}
+
+async function rotateFile(file: File, rotation: number): Promise<File> {
+  if (!rotation) return file;
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+  image.src = url;
+  await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error("无法读取图片")); });
+  URL.revokeObjectURL(url);
+  const canvas = document.createElement("canvas");
+  const quarterTurn = rotation % 180 !== 0;
+  canvas.width = quarterTurn ? image.naturalHeight : image.naturalWidth;
+  canvas.height = quarterTurn ? image.naturalWidth : image.naturalHeight;
+  const context = canvas.getContext("2d");
+  if (!context) return file;
+  context.translate(canvas.width / 2, canvas.height / 2);
+  context.rotate((rotation * Math.PI) / 180);
+  context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+  return blob ? new File([blob], file.name, { type: "image/png" }) : file;
+}
+
 function PerspectiveEditor({
   image,
   points,
@@ -82,23 +110,21 @@ function PerspectiveEditor({
     observer.observe(frameRef.current);
     return () => observer.disconnect();
   }, []);
-  const rotated = rotation % 180 !== 0;
   const scale =
     natural.w && natural.h
-      ? Math.min(
-          (size.w - 32) / (rotated ? natural.h : natural.w),
-          (size.h - 32) / (rotated ? natural.w : natural.h),
-        )
+      ? Math.min((size.w - 32) / natural.w, (size.h - 32) / natural.h)
       : 0;
   const movePoint = (clientX: number, clientY: number) => {
     const index = activeRef.current;
     const frame = canvasRef.current;
     if (index === null || !frame) return;
     const rect = frame.getBoundingClientRect();
-    const next = {
+    const q = {
       x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
       y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
     };
+    const turns = rotation / 90;
+    const next = turns === 1 ? { x: q.y, y: 1 - q.x } : turns === 2 ? { x: 1 - q.x, y: 1 - q.y } : turns === 3 ? { x: 1 - q.y, y: q.x } : q;
     onChange(
       points.map((point, pointIndex) =>
         pointIndex === index ? next : point,
@@ -123,7 +149,7 @@ function PerspectiveEditor({
         p: 2,
         background: "#f1f2f7",
         borderRadius: 2,
-        overflow: "hidden",
+        overflow: "visible",
         touchAction: "none",
       }}
     >
@@ -134,17 +160,14 @@ function PerspectiveEditor({
         onPointerCancel={stopDragging}
         sx={{
           position: "relative",
-          width: natural.w
-            ? (rotated ? natural.h : natural.w) * scale
-            : "100%",
-          height: natural.h
-            ? (rotated ? natural.w : natural.h) * scale
-            : "100%",
+          width: natural.w ? natural.w * scale : "100%",
+          height: natural.h ? natural.h * scale : "100%",
           maxWidth: "100%",
           maxHeight: "100%",
           lineHeight: 0,
           borderRadius: 0,
           overflow: "visible",
+          transform: `rotate(${rotation}deg)`,
           boxShadow: "0 10px 28px rgba(32,38,70,.12)",
         }}
       >
@@ -158,17 +181,13 @@ function PerspectiveEditor({
             })
           }
           style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            width: natural.w ? natural.w * scale : "100%",
-            height: natural.h ? natural.h * scale : "100%",
+            width: "100%",
+            height: "100%",
             display: "block",
             objectFit: "contain",
             borderRadius: 0,
             userSelect: "none",
             pointerEvents: "none",
-            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
           }}
         />
         <svg
@@ -274,10 +293,6 @@ export default function ScannerPage() {
           ? {
               ...photo,
               rotation: (photo.rotation + 90) % 360,
-              perspective: photo.perspective.map((point) => ({
-                x: 1 - point.y,
-                y: point.x,
-              })) as Perspective,
             }
           : photo,
       ),
@@ -296,9 +311,9 @@ export default function ScannerPage() {
       const output = await Promise.all(
         photos.map(async (photo) => {
           const body = new FormData();
-          body.append("file", photo.file);
-          body.append("perspective", JSON.stringify(photo.perspective));
-          body.append("rotation", String(photo.rotation));
+          const file = await rotateFile(photo.file, photo.rotation);
+          body.append("file", file);
+          body.append("perspective", JSON.stringify(rotatePerspective(photo.perspective, photo.rotation)));
           Object.entries(settings).forEach(([key, value]) =>
             body.append(key, String(value)),
           );

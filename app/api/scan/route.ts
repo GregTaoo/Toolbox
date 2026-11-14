@@ -166,7 +166,6 @@ export async function POST(request: Request) {
       Math.min(100, Number(form.get("blackPoint") ?? 20)),
     );
     const sharpness = Number(form.get("sharpness") ?? 24);
-    const rotation = ((Number(form.get("rotation") ?? 0) % 360) + 360) % 360;
     const perspective = JSON.parse(
       String(form.get("perspective")),
     ) as Perspective;
@@ -174,7 +173,6 @@ export async function POST(request: Request) {
       failOn: "none",
     })
       .rotate()
-      .rotate(-rotation)
       .resize({
         width: 2200,
         height: 2200,
