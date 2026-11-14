@@ -174,6 +174,7 @@ export async function POST(request: Request) {
       failOn: "none",
     })
       .rotate()
+      .rotate(rotation)
       .resize({
         width: 2200,
         height: 2200,
@@ -202,7 +203,6 @@ export async function POST(request: Request) {
       raw: { width: info.width, height: info.height, channels: info.channels },
     })
       .sharpen({ sigma: 0.35 + sharpness / 80 })
-      .rotate(rotation)
       .webp({ quality: 94 })
       .toBuffer();
     return new NextResponse(output as BodyInit, {
