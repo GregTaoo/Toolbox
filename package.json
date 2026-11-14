@@ -1,0 +1,32 @@
+{
+  "name": "toolbox",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write app package.json tsconfig.json",
+    "format:check": "prettier --check app package.json tsconfig.json"
+  },
+  "dependencies": {
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.1",
+    "@mui/icons-material": "^6.4.12",
+    "@mui/material": "^6.4.12",
+    "@techstark/opencv-js": "5.0.0-release.1",
+    "jspdf": "2.5.2",
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "sharp": "0.33.5"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.10",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "prettier": "^3.9.10",
+    "typescript": "5.7.2"
+  }
+}
