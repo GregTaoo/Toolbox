@@ -319,6 +319,7 @@ export default function ScannerPage() {
           );
           const response = await fetch("/api/scan", { method: "POST", body });
           if (!response.ok) throw new Error("处理失败");
+          if (photo.processed) URL.revokeObjectURL(photo.processed);
           return {
             ...photo,
             processed: URL.createObjectURL(await response.blob()),
@@ -750,7 +751,6 @@ function ResultView({
               maxHeight: 620,
               objectFit: "contain",
               display: "block",
-              borderRadius: 8,
             }}
           />
         </Paper>
